@@ -1,12 +1,13 @@
-package naddy
+package CaddyNetlifyRedirects
 
 import (
 	"errors"
 	"fmt"
-	"github.com/tj/go-redirects"
-	"github.com/ucarion/urlpath"
 	"net/url"
 	"strings"
+
+	"github.com/tj/go-redirects"
+	"github.com/ucarion/urlpath"
 )
 
 func ParseUrlWithContext(urlStr string, ctx *MatchContext) (*url.URL, error) {
@@ -55,10 +56,12 @@ func MatchUrlToRule(rule redirects.Rule, reqUrl *url.URL, ctx *MatchContext) Mat
 		}
 	}
 
+	// Check if our URL matches any path we have in the rules
 	path := urlpath.New(strings.Trim(from.Path, "/"))
 	matched, ok := path.Match(strings.Trim(reqUrl.Path, "/"))
 
 	if !ok {
+		// sugar.Errorw("not OK", "from.path", from.Path, "reqUrl.Path", reqUrl.Path)
 		return MatchResult{
 			ResolvedTo:     nil,
 			IsMatched:      false,
@@ -86,6 +89,14 @@ func MatchUrlToRule(rule redirects.Rule, reqUrl *url.URL, ctx *MatchContext) Mat
 		Match:          &matched,
 		IsMatched:      false,
 		IsHostRedirect: false,
+		IsNoRedirect:   true,
+	}
+
+	// if the to.path = reqURL.path we can skip the rest of the checks and NOT return a match for a redirect! otherwise redirect loop
+
+	if to.Path == reqUrl.Path && (to.Host == reqUrl.Host || to.Host == "") {
+		skipMatch.IsNoRedirect = true
+		return skipMatch
 	}
 
 	/*
@@ -133,7 +144,7 @@ func MatchUrlToRule(rule redirects.Rule, reqUrl *url.URL, ctx *MatchContext) Mat
 				return skipMatch
 			}
 
-			if strings.HasSuffix(ctx.OriginalUrl.Path, "/") == false {
+			if !strings.HasSuffix(ctx.OriginalUrl.Path, "/") {
 				// redirect
 				prefixedTo := reqUrl
 				prefixedTo.Path = fmt.Sprintf("%s/", prefixedTo.Path)

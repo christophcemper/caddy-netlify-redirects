@@ -1,14 +1,15 @@
-package naddy
+package CaddyNetlifyRedirects
 
 import (
 	"fmt"
-	"github.com/caddyserver/caddy/v2"
-	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"github.com/tj/go-redirects"
 	"html"
 	"net/http"
 	"path"
 	"strconv"
+
+	"github.com/caddyserver/caddy/v2"
+	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"github.com/tj/go-redirects"
 )
 
 func init() {
@@ -50,22 +51,38 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 
 	reqUrl.RawQuery = r.URL.RawQuery
 
+	var result MatchResult
+
 	for _, rule := range m.Redirects {
-		result := MatchUrlToRule(rule, reqUrl, mc)
+		result = MatchUrlToRule(rule, reqUrl, mc)
+
+		if result.IsNoRedirect {
+			break
+		}
 
 		if result.Error != nil {
 			m.Logger.Error(result.Error.Error())
-
 			continue
 		}
 
-		if result.IsMatched == false {
+		if !result.IsMatched {
 			continue
+		}
+
+		if r.URL.Path == result.ResolvedTo.Path {
+			// m.Logger.Warn("no redirect loop!",
+			// 	zapcore.Field{
+			// 		Key:    "URL",
+			// 		Type:   zapcore.StringType,
+			// 		String: reqUrl.String(),
+			// 	})
+			break
 		}
 
 		return m.handleRedirectResponse(result, rule, w, r)
 	}
 
+	m.Logger.Warn("next")
 	return next.ServeHTTP(w, r)
 }
 

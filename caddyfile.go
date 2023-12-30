@@ -1,7 +1,8 @@
-package naddy
+package CaddyNetlifyRedirects
 
 import (
 	"fmt"
+
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
@@ -39,7 +40,7 @@ func parseCaddyfile(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error)
 
 				allRedirects = fmt.Sprintf("%s\n", allRedirects)
 
-				if d.Next() == false {
+				if !d.Next() {
 					break
 				}
 			}

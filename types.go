@@ -1,10 +1,11 @@
-package naddy
+package CaddyNetlifyRedirects
 
 import (
+	"net/url"
+
 	"github.com/tj/go-redirects"
 	"github.com/ucarion/urlpath"
 	"go.uber.org/zap"
-	"net/url"
 )
 
 type Middleware struct {
@@ -22,6 +23,7 @@ type MatchResult struct {
 	ResolvedTo *url.URL
 	Source     redirects.Rule
 
+	IsNoRedirect   bool
 	IsMatched      bool
 	IsHostRedirect bool
 

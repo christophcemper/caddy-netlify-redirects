@@ -1,10 +1,11 @@
-package naddy
+package CaddyNetlifyRedirects
 
 import (
 	"fmt"
-	"github.com/tj/go-redirects"
 	"net/url"
 	"testing"
+
+	"github.com/tj/go-redirects"
 )
 
 func MustParseUrl(urlStr string) *url.URL {
@@ -19,6 +20,10 @@ func MustParseUrl(urlStr string) *url.URL {
 
 func TestRedirects(t *testing.T) {
 	rules := redirects.Must(redirects.ParseString(`
+		/prompts/:p1/:p2/1906616503827697664 /prompts/productivity/plan/1906616503827697664/
+		/prompts/:p1/:p2/1906420953656336384 /prompts/seo/web-development/1906420953656336384/
+		/prompts/:p1/:p2/1826944574975905792 /prompts/copywriting/marketing/1826944574975905792/
+
 		/relative/path/:paramOne /relative/path/redirected/:paramOne
 		/relative/* /path/changed/:splat/hello
 		/test/* /redirect/:splat
@@ -41,6 +46,22 @@ func TestRedirects(t *testing.T) {
 		IsHostRedirect bool
 		ExpectedTo     string
 	}{
+
+		// equal is NOT matched (no redirect)
+		{
+			MustParseUrl("http://www.one.test/prompts/productivity/plan/1906616503827697664/"),
+			false,
+			false,
+			"http://www.one.test/prompts/productivity/plan/1906616503827697664/",
+		},
+		// equal is NOT matched (no redirect)
+		{
+			MustParseUrl("http://www.one.test/prompts/bla/blug/1906616503827697664/"),
+			true,
+			false,
+			"/prompts/productivity/plan/1906616503827697664/",
+		},
+
 		// Relative
 		{
 			MustParseUrl("http://www.one.test"),
@@ -133,6 +154,7 @@ func TestRedirects(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 
 			matchFound := false
+
 			for _, rule := range rules {
 				result := MatchUrlToRule(rule, tc.RequestUrlIn, ctx)
 

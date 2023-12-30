@@ -1,6 +1,14 @@
 # caddy-netlify-redirects
 
-***For use with Caddy2.***
+WHY?
+- Because caddy doesn't have a simple regex redirect sytnax module
+- Because caddy doesn't have a simple "variable replacement" redirect module
+
+The netlify redirect syntax is simple and easy to use, so why not use it?
+
+*** For use with Caddy2.7.6 and Golang 1.21 ***
+
+INCLUDES FIXES FOR REDIRECT LOOPS.
 
 ### Warning: This module does not handle query string matching the same as Netlify. It will only perform *exact* match.
 
@@ -34,12 +42,12 @@ See https://caddyserver.com/docs/extending-caddy and https://github.com/caddyser
 As an example, within a dockerfile you can build Caddy with this custom module:
 
 ```dockerfile
-FROM caddy:2.4.3-builder AS builder
+FROM caddy:2.7.6-builder AS builder
 
 RUN xcaddy build \
-   --with github.com/samvaughton/caddy-netlify-redirects/v2
+   --with github.com/christophcemper/caddy-netlify-redirects/v2
    
-FROM caddy:2.4.3-alpine as serve
+FROM caddy:2.7.6-alpine as serve
 
 COPY --from=builder /usr/bin/caddy /usr/bin/caddy
 COPY ./Caddyfile /etc/caddy/Caddyfile
@@ -47,6 +55,15 @@ COPY ./Caddyfile /etc/caddy/Caddyfile
 # Copy over your built assets for your webapp, this could be from gatbsy which includes a _redirects file
 COPY --from=node-builder /usr/src/app/packages/rentivo-gatsby-site/public /srv
 ```
+
+Or instead of the docker stuff, just clone the caddy repo and run `xcaddy build` with the module added.
+
+```
+git clone https://github.com/caddyserver/caddy.git
+go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+xcaddy build --with github.com/christophcemper/caddy-netlify-redirects 
+```
+
 
 ## Config
 
