@@ -82,7 +82,6 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 		return m.handleRedirectResponse(result, rule, w, r)
 	}
 
-	m.Logger.Warn("next")
 	return next.ServeHTTP(w, r)
 }
 
